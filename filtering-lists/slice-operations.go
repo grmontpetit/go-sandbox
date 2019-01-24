@@ -116,35 +116,6 @@ func (l ObjectList) OrderBy(ordering func(o1 *Object, o2 *Object) bool) ObjectLi
 	return l.QuickSort(ordering)
 }
 
-// QuickSort implementation
-func (l ObjectList) QuickSort(ordering func(o1 *Object, o2 *Object) bool) ObjectList {
-	if len(l) < 2 {
-		return l
-	}
-
-	list := NewBoundObjectList(len(l))
-
-	left, right := 0, len(l)-1
-
-	pivot := rand.Int() % len(l)
-
-	l[pivot], l[right] = l[right], l[pivot]
-
-	for i := range l {
-		if ordering(l[i], l[right]) {
-			list[left], list[i] = l[i], l[left]
-			left++
-		}
-	}
-
-	l[left], l[right] = l[right], l[left]
-
-	list = append(list, l[:left].QuickSort(ordering)...)
-	list = append(list, l[left+1:].QuickSort(ordering)...)
-
-	return list
-}
-
 func quicksort(a []int) []int {
 	if len(a) < 2 {
 		return a
@@ -169,4 +140,37 @@ func quicksort(a []int) []int {
 	quicksort(a[left+1:])
 
 	return a
+}
+
+// QuickSort implementation
+func (l ObjectList) QuickSort(ordering func(o1 *Object, o2 *Object) bool) ObjectList {
+	if len(l) < 2 {
+		return l
+	}
+
+	list := NewBoundObjectList(len(l))
+
+	left, right := 0, len(l)-1
+
+	pivot := rand.Int() % len(l)
+
+	l[pivot], l[right] = l[right], l[pivot]
+
+	for i := range l {
+		if ordering(l[i], l[right]) {
+			list[left], list[i] = l[i], l[left]
+			left++
+		}
+		if ordering(l[right], l[i]) {
+			list[left], list[i] = l[left], l[i]
+			left++
+		}
+	}
+
+	l[left], l[right] = l[right], l[left]
+
+	list = append(list, l[:left].QuickSort(ordering)...)
+	list = append(list, l[left+1:].QuickSort(ordering)...)
+
+	return list
 }
