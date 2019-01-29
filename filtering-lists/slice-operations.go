@@ -74,13 +74,13 @@ func main() {
 	}
 
 	fmt.Println("Ordered items: ")
-	ordering := func(o1 *Object, o2 *Object) bool {
-		if o1.counter > o2.counter {
-			return true
-		}
-		return false
-	}
-	for _, item := range myList.QuickSort(ordering) {
+	// ordering := func(o1 *Object, o2 *Object) bool {
+	// 	if o1.counter > o2.counter {
+	// 		return true
+	// 	}
+	// 	return false
+	// }
+	for _, item := range myList.QuickSort() {
 		fmt.Printf("%#v\n", item)
 	}
 }
@@ -111,66 +111,43 @@ func (l ObjectList) Filter(filter func(object *Object) bool) ObjectList {
 	return list
 }
 
-// OrderBy Orders a list by ordering the items
-func (l ObjectList) OrderBy(ordering func(o1 *Object, o2 *Object) bool) ObjectList {
-	return l.QuickSort(ordering)
-}
-
-func quicksort(a []int) []int {
-	if len(a) < 2 {
-		return a
-	}
-
-	left, right := 0, len(a)-1
-
-	pivot := rand.Int() % len(a)
-
-	a[pivot], a[right] = a[right], a[pivot]
-
-	for i := range a {
-		if a[i] < a[right] {
-			a[left], a[i] = a[i], a[left]
-			left++
-		}
-	}
-
-	a[left], a[right] = a[right], a[left]
-
-	quicksort(a[:left])
-	quicksort(a[left+1:])
-
-	return a
-}
-
-// QuickSort implementation
-func (l ObjectList) QuickSort(ordering func(o1 *Object, o2 *Object) bool) ObjectList {
+// QuickSort ascending implementation
+func (l ObjectList) QuickSort() ObjectList {
 	if len(l) < 2 {
 		return l
 	}
 
 	list := NewBoundObjectList(len(l))
 
-	left, right := 0, len(l)-1
-
 	pivot := rand.Int() % len(l)
 
-	l[pivot], l[right] = l[right], l[pivot]
-
-	for i := range l {
-		if ordering(l[i], l[right]) {
-			list[left], list[i] = l[i], l[left]
-			left++
+	stPivot := func(o *Object) bool {
+		if o.counter < l[pivot].counter {
+			return true
 		}
-		if ordering(l[right], l[i]) {
-			list[left], list[i] = l[left], l[i]
-			left++
+		return false
+	}
+	etPivot := func(o *Object) bool {
+		if o.counter == l[pivot].counter {
+			return true
 		}
+		return false
+	}
+	gtPivot := func(o *Object) bool {
+		if o.counter > l[pivot].counter {
+			return true
+		}
+		return false
 	}
 
-	l[left], l[right] = l[right], l[left]
+	list = append(list, l.Filter(stPivot).QuickSort()...)
+	list = append(list, l.Filter(etPivot)...)
+	list = append(list, l.Filter(gtPivot).QuickSort()...)
 
-	list = append(list, l[:left].QuickSort(ordering)...)
-	list = append(list, l[left+1:].QuickSort(ordering)...)
-
-	return list
+	return list.Filter(func(o *Object) bool {
+		if o != nil {
+			return true
+		}
+		return false
+	})
 }
