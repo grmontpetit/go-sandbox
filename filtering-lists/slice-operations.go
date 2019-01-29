@@ -80,7 +80,7 @@ func main() {
 		}
 		return false
 	}
-	for _, item := range myList.QuickSort1(ordering) {
+	for _, item := range myList.QuickSortCustom(ordering) {
 		fmt.Printf("%#v\n", item)
 	}
 }
