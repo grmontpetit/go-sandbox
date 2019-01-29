@@ -74,13 +74,13 @@ func main() {
 	}
 
 	fmt.Println("Ordered items: ")
-	// ordering := func(o1 *Object, o2 *Object) bool {
-	// 	if o1.counter > o2.counter {
-	// 		return true
-	// 	}
-	// 	return false
-	// }
-	for _, item := range myList.QuickSort() {
+	ordering := func(o1 *Object, o2 *Object) bool {
+		if o1.counter > o2.counter {
+			return true
+		}
+		return false
+	}
+	for _, item := range myList.QuickSort1(ordering) {
 		fmt.Printf("%#v\n", item)
 	}
 }
@@ -109,6 +109,47 @@ func (l ObjectList) Filter(filter func(object *Object) bool) ObjectList {
 		}
 	}
 	return list
+}
+
+// QuickSortCustom custom ordering
+func (l ObjectList) QuickSortCustom(ordering func(o1 *Object, o2 *Object) bool) ObjectList {
+	if len(l) < 2 {
+		return l
+	}
+
+	list := NewBoundObjectList(len(l))
+
+	pivot := rand.Int() % len(l)
+
+	stPivot := func(o *Object) bool {
+		if ordering(o, l[pivot]) {
+			return true
+		}
+		return false
+	}
+	etPivot := func(o *Object) bool {
+		if o.counter == l[pivot].counter {
+			return true
+		}
+		return false
+	}
+	gtPivot := func(o *Object) bool {
+		if ordering(l[pivot], o) {
+			return true
+		}
+		return false
+	}
+
+	list = append(list, l.Filter(stPivot).QuickSortCustom(ordering)...)
+	list = append(list, l.Filter(etPivot)...)
+	list = append(list, l.Filter(gtPivot).QuickSortCustom(ordering)...)
+
+	return list.Filter(func(o *Object) bool {
+		if o != nil {
+			return true
+		}
+		return false
+	})
 }
 
 // QuickSort ascending implementation
