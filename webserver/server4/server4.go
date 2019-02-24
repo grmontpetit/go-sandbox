@@ -104,8 +104,9 @@ func paint(x, y float64, scale int, canvas [][]int, maxVal int) {
 }
 
 // lissajous computes the lissajous curve, and plots it onto several gif frames.
-func lissajous(out io.Writer, cycles int) error {
-
+func lissajous(out io.Writer, c int) error {
+	size = 1000
+	cycles = float64(c)
 	anim := gif.GIF{LoopCount: nframes}
 	for i := 0; i < nframes; i++ {
 		rect := image.Rect(0, 0, 2*size+1, 2*size-1)
@@ -118,7 +119,7 @@ func lissajous(out io.Writer, cycles int) error {
 		}
 
 		// Compute the values at each pixel.
-		for t := 0.0; t < float64(cycles)*2*math.Pi; t += res {
+		for t := 0.0; t < cycles*2*math.Pi; t += res {
 			x := math.Sin(t*xfreq + xphase)
 			y := math.Sin(t*yfreq + yphase)
 			paint(x, y, size-2, lisa, 15)
