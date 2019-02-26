@@ -8,11 +8,12 @@ import (
 
 // Object some random object
 type Object struct {
-	Field1      string
-	Field2      int
-	Field3      []string
-	Data        *AStruct
-	StructSlice []*Elem
+	Field1       string
+	Field2       int
+	Field3       []string
+	BooleanField bool
+	Data         *AStruct
+	StructSlice  []*Elem
 }
 
 // AStruct a struct
@@ -34,6 +35,7 @@ type Elem struct {
 func main() {
 	object := new(Object)
 	object.Field1 = "field1"
+	object.Field2 = 1
 	object.Field3 = []string{"aaa", "bbb"}
 	structField := new(AnotherStruct)
 	structField.Field5 = 9999
@@ -43,7 +45,7 @@ func main() {
 	elems = append(elems, &Elem{Field99: 3})
 	object.StructSlice = elems
 	//object.Data = &AStruct{}
-	//object.Data = &AStruct{Field4: "ooo", StructField: structField}
+	object.Data = &AStruct{Field4: "ooo", StructField: structField}
 
 	// DO NOT DELETE
 	// val := reflect.ValueOf(object).Elem()
@@ -54,82 +56,86 @@ func main() {
 	// 	fmt.Printf("Field Name: %s,\t Field Value: %v,\t Tag Value: %s\t IsEmpty: %t \n", typeField.Name, valueField.Interface(), tag.Get("tag_name"), isEmpty(valueField.Interface()))
 	// }
 
-	valuePath := "Object/Data/Field1"
-	b := valueExistInStructPath(object, valuePath)
-	exist := "does NOT exist"
+	valuePath := "Object/BooleanField"
+	b, v := valueExistInStructPath(object, valuePath)
+	found := fmt.Sprintf("Not found: no data exist at %s", valuePath)
 	if b {
-		exist = "exists"
+		found = fmt.Sprintf("Found: data exist at %s: value=%v", valuePath, v)
 	}
-	fmt.Printf("Value %s in %s\n", exist, valuePath)
+	fmt.Println(found)
 
 }
 
-func valueExistInStructPath(parentStruct interface{}, path string) bool {
-	fmt.Println(path)
+func valueExistInStructPath(currentValue interface{}, path string) (bool, interface{}) {
+
 	fullPath := strings.Split(path, "/")
+	var empty bool
+	var value interface{}
 
 	if len(fullPath) == 1 {
-		return isEmpty(reflect.ValueOf(parentStruct))
+		empty, value = isEmpty(currentValue)
+		return !empty, value
 	}
 
-	if strings.Split(reflect.TypeOf(parentStruct).String(), ".")[1] == fullPath[0] {
-		fullPath = fullPath[1:]
-	}
-	val := reflect.ValueOf(parentStruct).Elem()
-	exist := false
-	for i := 0; i < val.NumField(); i++ {
-		valueField := val.Field(i)
-		typeField := val.Type().Field(i)
-		// fmt.Printf("%v == %v\n", typeField.Name, fullPath[0])
-		// if typeField.Name == fullPath[0] {
-		// 	fmt.Println(valueField.Interface())
-		// }
+	fullPath = fullPath[1:]
 
-		//fmt.Println(valueField)
-		if len(fullPath) == 1 && fullPath[0] == typeField.Name {
-			exist = !isEmpty(valueField.Interface())
-		} else {
-			exist = valueExistInStructPath(valueField.Interface(), strings.Join(fullPath[1:], "/"))
-		}
+	val := reflect.ValueOf(currentValue).Elem()
+	empty, value = isEmpty(val)
+	if empty {
+		return false, nil
 	}
-	return exist
+
+	valueField := val.FieldByName(fullPath[0])
+	empty, value = isEmpty(valueField)
+	if empty {
+		return false, nil
+	}
+
+	return valueExistInStructPath(valueField.Interface(), strings.Join(fullPath, "/"))
 }
 
-func isEmpty(data interface{}) bool {
+func isEmpty(data interface{}) (bool, interface{}) {
 	empty := false
+	var value interface{}
+
 	v := reflect.ValueOf(data)
 	switch reflect.ValueOf(data).Kind() {
 	case reflect.Ptr:
 		val := reflect.ValueOf(data).Elem()
 		if reflect.ValueOf(data).IsNil() {
 			empty = true
-			return empty
+			return empty, nil
 		}
 		for i := 0; i < val.NumField(); i++ {
-			empty = isEmpty(val.Field(i).Interface())
+			empty, value = isEmpty(val.Field(i).Interface())
 		}
 	case reflect.Int:
-		if v.Int() == 0 {
+		value = v.Int()
+		if value == 0 {
 			empty = true
 		}
 	case reflect.Bool:
+		value = v.Bool()
 		if !v.Bool() {
 			empty = true
 		}
 	case reflect.String:
-		if v.String() == "" {
+		value = v.String()
+		if value == "" {
 			empty = true
 		}
 	case reflect.Slice:
 		if v.Len() == 0 {
+			value = v.Slice
 			empty = true
 		}
 	case reflect.Struct:
 		if reflect.Zero(reflect.TypeOf(v)).Interface() == v.Interface() {
+			value = v.Interface()
 			empty = true
 		}
 	default:
-		return empty
+		return empty, value
 	}
-	return empty
+	return empty, value
 }
